@@ -52,10 +52,37 @@ app.get("/tasks", (req, res) => {
     try{
         const tasksData = fs.readFileSync(taskPath, "utf-8");
         const tasks = JSON.parse(tasksData).tasks;
+
+        // Filtering by completion status
+        if(req.query.completed){
+            const completed = req.query.completed === "true";
+            const tasks = tasks.filter(task => task.completed === completed)
+        }
+
+        // Sirting by creationAt (asceding or descending)
+        if(req.query.sortBy === "createdAt"){
+            const order = req.query.order === "desc"? -1:1;
+            tasks.sort((a,b) => (new Date(a.createdAt) - new Date(b.createdAt)) * order);
+        }
+
         res.status(200).json(tasks);
     }catch(error){
         console.error(error);
         res.status(500).json({ success:false, message:"Internal Server Error" });
+    }
+})
+
+// READ TASK BY PRIORITY
+app.get("/tasks/prority/:level", (req, res) => {
+    try{
+        const { level } = req.params;
+        const tasksData = fs.readFileSync(taskPath, "utf-8");
+        const tasks = JSON.parse(tasksData).tasks;
+
+        const filteredTasks = tasks.filter(task => task.priority === level.toLocaleLowerCase());
+    }catch(error){
+        console.error("Priority error", error);
+        return res.status(500).json({ success:false, message:"Internal server error" });
     }
 })
 
